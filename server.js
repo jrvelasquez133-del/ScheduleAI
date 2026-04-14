@@ -48,41 +48,45 @@ async function extractText(file) {
   return '';
 }
 
-// ── Función para llamar a Gemini ──
-async function callGemini(systemPrompt, userMessage) {
-  const apiKey = process.env.GEMINI_KEY;
+// ── Función para llamar a OpenAI ──
+async function callAI(systemPrompt, userMessage) {
+  const apiKey = process.env.OPENAI_KEY;
   if (!apiKey) {
-    throw new Error('GEMINI_KEY no está configurada. Ve a Render → Environment y agrégala.');
+    throw new Error('OPENAI_KEY no está configurada. Ve a Render → Environment y agrégala.');
   }
 
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        system_instruction: { parts: [{ text: systemPrompt }] },
-        contents: [{ parts: [{ text: userMessage }] }],
-        generationConfig: { temperature: 0.3, maxOutputTokens: 1000 }
-      })
-    }
-  );
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userMessage }
+      ],
+      temperature: 0.3,
+      max_tokens: 1000
+    })
+  });
 
   const data = await response.json();
 
   if (!response.ok) {
-    console.error('Gemini API error:', data);
-    throw new Error(data.error?.message || 'Error de Gemini API');
+    console.error('OpenAI API error:', data);
+    throw new Error(data.error?.message || 'Error de OpenAI API');
   }
 
-  return data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '{}';
+  return data?.choices?.[0]?.message?.content?.trim() || '{}';
 }
 
 // ── Endpoint: Chat sin archivo ──
 app.post('/api/chat', async (req, res) => {
   try {
     const { system, message } = req.body;
-    const rawText = await callGemini(system, message);
+    const rawText = await callAI(system, message);
     res.json({ text: rawText });
   } catch (err) {
     console.error('Chat error:', err);
@@ -99,17 +103,15 @@ app.post('/api/chat-file', upload.single('file'), async (req, res) => {
       return res.status(400).json({ error: 'No se recibió ningún archivo.' });
     }
 
-    // Extraer texto del archivo
     const fileText = await extractText(req.file);
 
     if (!fileText || fileText.trim().length === 0) {
       return res.status(400).json({ error: 'No se pudo extraer texto del archivo. Verifica que no esté vacío o protegido.' });
     }
 
-    // Combinar el mensaje del usuario con el contenido del archivo
     const fullMessage = `${message}\n\n--- CONTENIDO DEL ARCHIVO "${req.file.originalname}" ---\n${fileText.substring(0, 15000)}`;
 
-    const rawText = await callGemini(system, fullMessage);
+    const rawText = await callAI(system, fullMessage);
     res.json({ text: rawText });
 
   } catch (err) {
