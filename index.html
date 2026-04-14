@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ScheduleAI</title>
+  <style>
+    body {
+      margin: 0;
+      background: #0B0B18;
+    }
+    /* Responsive: en pantallas grandes centrar y dar sombra */
+    @media (min-width: 600px) {
+      .app-shell {
+        max-width: 480px !important;
+        margin: 0 auto !important;
+        box-shadow: 0 0 60px rgba(79,70,229,.15), 0 0 0 1px rgba(255,255,255,.06);
+        border-radius: 0 0 18px 18px;
+      }
+    }
+    @media (min-width: 900px) {
+      body { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+      .app-shell {
+        max-width: 440px !important;
+        height: 95vh !important;
+        border-radius: 24px !important;
+        box-shadow: 0 25px 80px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.08), 0 0 120px rgba(79,70,229,.12);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module">
+    import React from 'react';
+    import ReactDOM from 'react-dom/client';
+    import App from './ScheduleAI.jsx';
+
+    ReactDOM.createRoot(document.getElementById('root')).render(
+      React.createElement(App)
+    );
+  </script>
+</body>
+</html>
